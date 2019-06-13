@@ -8,25 +8,23 @@ all: run
 # or to publish the :latest version to the specified registry as :1.0.0, run:
 # $ make publish version=1.0.0
 
-name = ecs-refarch-cloudformation/website-service
-registry = 275396840892.dkr.ecr.us-east-1.amazonaws.com
+name = main/api-service
+registry = 707153133171.dkr.ecr.eu-west-1.amazonaws.com
 version ?= latest
+region ?= eu-west-1
 
-binary:
-	$(call blue, "Building Linux binary ready for containerisation...")
-	docker run --rm -it -v "${GOPATH}":/gopath -v "$(CURDIR)":/app -e "GOPATH=/gopath" -w /app golang:1.7 sh -c 'CGO_ENABLED=0 go build -a --installsuffix cgo --ldflags="-s" -o app'
-
-image: binary
+image:
 	$(call blue, "Building docker image...")
 	docker build -t ${name}:${version} .
 	$(MAKE) clean
 
 run: image
 	$(call blue, "Running Docker image locally...")
-	docker run -i -t --rm -p 8000:8000 ${name}:${version} 
+	docker run -i -t --rm -p 8080:8080 ${name}:${version} 
 
 publish:  
 	$(call blue, "Publishing Docker image to registry...")
+	aws ecr get-login --no-include-email --region ${region} | /bin/bash
 	docker tag ${name}:latest ${registry}/${name}:${version}
 	docker push ${registry}/${name}:${version} 
 
